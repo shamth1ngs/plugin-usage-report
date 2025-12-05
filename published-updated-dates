@@ -1,3 +1,4 @@
+<?php
 // Review Ranger Article Dates shortcode
 if ( ! function_exists( 'rr_article_dates_shortcode' ) ) {
 
