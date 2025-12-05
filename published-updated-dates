@@ -1,0 +1,129 @@
+// Review Ranger Article Dates shortcode
+if ( ! function_exists( 'rr_article_dates_shortcode' ) ) {
+
+    function rr_article_dates_shortcode( $atts ) {
+        global $post;
+
+        if ( ! $post ) {
+            return '';
+        }
+
+        // Allow tweaks via shortcode attributes if needed
+        $atts = shortcode_atts(
+            array(
+                'date_format' => 'F j, Y', // e.g. February 20, 2024
+            ),
+            $atts,
+            'rr_article_dates'
+        );
+
+        $date_format = $atts['date_format'];
+
+        // Get formatted dates
+        $published_date = get_the_date( $date_format, $post );
+        $updated_date   = get_the_modified_date( $date_format, $post );
+
+        // Get timestamps for comparison
+        $published_ts = get_the_time( 'U', $post );
+        $updated_ts   = get_the_modified_time( 'U', $post );
+
+        // Optional: small buffer (in seconds) to ignore micro-edits right after publish.
+        $buffer_seconds = 0; // e.g. 300 for 5 minutes
+
+        // Only print CSS once per page load
+        static $rr_dates_css_printed = false;
+
+        ob_start();
+
+        if ( ! $rr_dates_css_printed ) :
+            $rr_dates_css_printed = true;
+            ?>
+            <style>
+            .rr-article-meta-dates {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4rem;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .rr-article-meta-dates__item {
+                display: flex;
+                flex-direction: column;
+                font-size: 18px;
+            }
+
+            .rr-article-meta-dates__label {
+                font-family: "Mukta Mahee", Sans-serif;
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: capitalize;
+                text-align: center;
+                letter-spacing: .05em;
+                color: #7F7F7F;
+            }
+
+            .rr-article-meta-dates__value__wrapper {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #000000;
+                border-radius: 30px;
+                padding-inline: 10px;
+            }
+
+            .rr-article-meta-dates__value__calendarImg {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .rr-article-meta-dates__value {
+                font-family: "Mukta Mahee", Sans-serif;
+                font-weight: 500;
+                font-size: 10px;
+                color: #324A6D;
+            }
+            </style>
+            <?php
+        endif;
+        ?>
+
+        <div class="rr-article-meta-dates">
+
+            <!-- Always show Published Date -->
+            <div class="rr-article-meta-dates__item">
+                <div class="rr-article-meta-dates__label">Published Date</div>
+                <div class="rr-article-meta-dates__value__wrapper">
+                    <div class="rr-article-meta-dates__value__calendarImg">
+                        <img src="<?php echo esc_url( 'https://sg.reviewranger.co/wp-content/uploads/Schedule.png' ); ?>" alt="">
+                    </div>
+                    <div class="rr-article-meta-dates__value">
+                        <?php echo esc_html( $published_date ); ?>
+                    </div>
+                </div>
+            </div>
+
+            <?php if ( $updated_ts > ( $published_ts + $buffer_seconds ) ) : ?>
+                <div class="rr-article-meta-dates__item">
+                    <div class="rr-article-meta-dates__label">Last Updated</div>
+                    <div class="rr-article-meta-dates__value__wrapper">
+                        <div class="rr-article-meta-dates__value__calendarImg">
+                            <img src="<?php echo esc_url( 'https://sg.reviewranger.co/wp-content/uploads/Schedule.png' ); ?>" alt="">
+                        </div>
+                        <div class="rr-article-meta-dates__value">
+                            <?php echo esc_html( $updated_date ); ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+        </div>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    add_shortcode( 'rr_article_dates', 'rr_article_dates_shortcode' );
+}
